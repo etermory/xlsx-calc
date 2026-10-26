@@ -15,8 +15,8 @@ const errorValues = {
 
 describe('XLSX_CALC', function() {
     let workbook;
-    beforeEach(function() {
-        workbook = {
+    function create_workbook() {
+        return {
             Sheets: {
                 Sheet1: {
                     A1: {},
@@ -38,6 +38,9 @@ describe('XLSX_CALC', function() {
                 }
             }
         };
+    }
+    beforeEach(function() {
+        workbook = create_workbook();
     });
 
     describe('ROUND', () => {
@@ -79,6 +82,55 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 10);
         });
+        it('should calc C1:C5+2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5+2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, 5);
+        });
+        it('should calc A1:A3+A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3+A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 5);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 6);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 7);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, 9);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, 10);
+        });
+        it('should calc A1:B3+A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3+A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 9);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 10);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
     });
     describe('minus', function() {
         it('should update the property A1.v with result of formula A2-C4', function() {
@@ -106,6 +158,64 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, -9);
         });
+        it('should calc C1:C5-2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5-2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, -2);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, -1);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, -1);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, 1);
+        });
+        it('should calc -C1:C5-2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: '-C1:C5-2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, -2);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, -3);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, -3);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, -4);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, -5);
+        });
+        it('should calc A1:A3-A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3-A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, -3);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, -2);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, -1);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, -6);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, -5);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, -4);
+        });
+        it('should calc A1:B3-A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3-A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
     });
     describe('multiply', function() {
         it('should calc A2*C5', function() {
@@ -127,6 +237,55 @@ describe('XLSX_CALC', function() {
             workbook.Sheets.Sheet1.A1.f = '2*3';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 6);
+        });
+        it('should calc C1:C5*2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5*2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, 6);
+        });
+        it('should calc A1:A3*A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3*A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 12);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, 7);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, 14);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, 21);
+        });
+        it('should calc A1:B3*A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3*A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 16);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 20);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 24);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
         });
     });
     describe('divide', function() {
@@ -150,12 +309,110 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 2);
         });
+        it('should calc C1:C5/2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5/2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 0.5);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 0.5);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, 1.5);
+        });
+        it('should calc A1:A3/A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3/A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 0.25);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 0.5);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 0.75);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, 1/7); // 0.14285714285714285
+            assert.equal(workbook.Sheets.Sheet1.F2.v, 2/7); // 0.2857142857142857
+            assert.equal(workbook.Sheets.Sheet1.F3.v, 3/7); // 0.42857142857142855
+        });
+        it('should calc A1:B3/A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3/A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 1.25);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 1.5);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
     });
     describe('power', function() {
         it('should calc 2^10', function() {
             workbook.Sheets.Sheet1.A1.f = '2^10';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 1024);
+        });
+        it('should calc C1:C5^2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5^2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 0);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, 9);
+        });
+        it('should calc A1:A3^A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3^A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 16);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 81);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, 128);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, 2187);
+        });
+        it('should calc A1:B3^A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3^A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 2);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 256);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 625);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 1296);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
         });
     });
     describe('SQRT', function() {
@@ -254,6 +511,55 @@ describe('XLSX_CALC', function() {
             workbook.Sheets.Sheet1.A1.f = '8/2*10';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 40);
+        });
+        it('should calc (C1:C5+3)*2', function() {
+            workbook.Sheets.Sheet1.D1 = { f: '(C1:C5+3)*2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 6);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, 10);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, 12);
+        });
+        it('should calc (A1:A3+3)*A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: '(A1:A3+3)*A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 5);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 6);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 16);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 20);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 24);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, 28);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, 35);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, 42);
+        });
+        it('should calc (A1:B3+3)*A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: '(A1:B3+3)*A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, 5);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, 6);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 28);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 32);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, 36);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
         });
     });
     describe('SUM', function() {
@@ -358,6 +664,55 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, '7concat +1');
         });
+        it('should calc C1:C5 & "concat"', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5 & "concat"' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, 'concat');
+            assert.equal(workbook.Sheets.Sheet1.D2.v, '1concat');
+            assert.equal(workbook.Sheets.Sheet1.D3.v, '1concat');
+            assert.equal(workbook.Sheets.Sheet1.D4.v, '2concat');
+            assert.equal(workbook.Sheets.Sheet1.D5.v, '3concat');
+        });
+        it('should calc A1:A3&A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3&A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, '11');
+            assert.equal(workbook.Sheets.Sheet1.D2.v, '21');
+            assert.equal(workbook.Sheets.Sheet1.D3.v, '31');
+            assert.equal(workbook.Sheets.Sheet1.E1.v, '14');
+            assert.equal(workbook.Sheets.Sheet1.E2.v, '24');
+            assert.equal(workbook.Sheets.Sheet1.E3.v, '34');
+            assert.equal(workbook.Sheets.Sheet1.F1.v, '17');
+            assert.equal(workbook.Sheets.Sheet1.F2.v, '27');
+            assert.equal(workbook.Sheets.Sheet1.F3.v, '37');
+        });
+        it('should calc A1:B3&A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3&A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, '11');
+            assert.equal(workbook.Sheets.Sheet1.D2.v, '21');
+            assert.equal(workbook.Sheets.Sheet1.D3.v, '31');
+            assert.equal(workbook.Sheets.Sheet1.E1.v, '44');
+            assert.equal(workbook.Sheets.Sheet1.E2.v, '54');
+            assert.equal(workbook.Sheets.Sheet1.E3.v, '64');
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
     });
     describe('CONCATENATE', function() {
         it('concatenates 1,2,3', function() {
@@ -408,18 +763,21 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 7);
         });
-        it('A1:A3 formula should return #VALUE! error', function () {
+        it('A1:A3 formula should return spilled array', function () {
             // workbook.Sheets.Sheet1.A1 = { t: "e", v: 42, w: "#N/A" };
             workbook.Sheets.Sheet1.A1 = { t: 'n', v: 3 };
             workbook.Sheets.Sheet1.A2 = { t: 'n', v: 1 };
             workbook.Sheets.Sheet1.A3 = { t: 'n', v: 2 };
             workbook.Sheets.Sheet1.B1 = { f: 'A1:A3' };
             XLSX_CALC(workbook);
-            assert.equal(workbook.Sheets.Sheet1.B1.t, 'e');
-            assert.equal(workbook.Sheets.Sheet1.B1.v, errorValues['#VALUE!']);
-            assert.equal(workbook.Sheets.Sheet1.B1.w, '#VALUE!');
+            assert.equal(workbook.Sheets.Sheet1.B1.t, 'n');
+            assert.equal(workbook.Sheets.Sheet1.B1.v, 3);
+            assert.equal(workbook.Sheets.Sheet1.B2.t, 'n');
+            assert.equal(workbook.Sheets.Sheet1.B2.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.B3.t, 'n');
+            assert.equal(workbook.Sheets.Sheet1.B3.v, 2);
         });
-        it('should preserve error state when a cell is in error', function () {
+        it('should contain error when a cell is in error', function () {
             workbook.Sheets.Sheet1.A1 = { t: "e", v: 42, w: "#N/A" };
             workbook.Sheets.Sheet1.A2 = { t: 'n', v: 1 };
             workbook.Sheets.Sheet1.A3 = { t: 'n', v: 2 };
@@ -429,7 +787,7 @@ describe('XLSX_CALC', function() {
             var formula = find_all_cells_with_formulas(workbook, exec_formula)[0];
             var range = exec_formula.build_expression(formula).args[0].calc();
             var expected = [
-                [{ t: "e", v: 42, w: "#N/A" }],
+                [new Error('#N/A')],
                 [1],
                 [2]
             ];
@@ -442,25 +800,221 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, true);
         });
+        it('evaluates C1:C5<2 as true,true,true,false,false', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5<2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, false);
+        });
+        it('evaluates A1:A3<A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3<A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, true);
+        });
+        it('evaluates A1:B3<A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3<A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
         it('evaluates 1>2 as false', function() {
             workbook.Sheets.Sheet1.A1.f = '1>2';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, false);
+        });
+        it('evaluates C1:C5>2 as false,false,false,false,true', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5>2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, true);
+        });
+        it('evaluates A1:A3>A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3>A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, false);
+        });
+        it('evaluates A1:B3>A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3>A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
         });
         it('evaluates 2=2 as true', function() {
             workbook.Sheets.Sheet1.A1.f = '2=2';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, true);
         });
+        it('evaluates C1:C5=2 as false,false,false,true,false', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5=2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, false);
+        });
+        it('evaluates A1:A3=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, false);
+        });
+        it('evaluates A1:B3=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
         it('evaluates 2>=2 as true', function() {
             workbook.Sheets.Sheet1.A1.f = '2>=2';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, true);
         });
-        it('evaluates 1>=2 as true', function() {
+        it('evaluates 1>=2 as false', function() {
             workbook.Sheets.Sheet1.A1.f = '1>=2';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, false);
+        });
+        it('evaluates C1:C5>=2 as false,false,false,true,true', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5>=2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, true);
+        });
+        it('evaluates A1:A3>=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3>=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, false);
+        });
+        it('evaluates A1:B3>=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3>=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
         });
         it('evaluates 2<=2 as true', function() {
             workbook.Sheets.Sheet1.A1.f = '2<=2';
@@ -479,6 +1033,55 @@ describe('XLSX_CALC', function() {
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, false);
         });
+        it('evaluates C1:C5<=2 as true,true,true,true,false', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5<=2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, false);
+        });
+        it('evaluates A1:A3<=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3<=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, true);
+        });
+        it('evaluates A1:B3<=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3<=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
         it('evaluates 1<>1 as false', function() {
             workbook.Sheets.Sheet1.A1.f = '1<>1';
             XLSX_CALC(workbook);
@@ -488,6 +1091,104 @@ describe('XLSX_CALC', function() {
             workbook.Sheets.Sheet1.A1.f = '2<>1';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, true);
+        });
+        it('evaluates C1:C5<>2 as true,true,true,false,true', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5<>2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, true);
+        });
+        it('evaluates A1:A3<>A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3<>A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, true);
+        });
+        it('evaluates A1:B3<>A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3<>A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, true);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
+        });
+        it('evaluates C1:C5=2 as false,false,false,true,false', function() {
+            workbook.Sheets.Sheet1.D1 = { f: 'C1:C5=2' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D4.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D5.v, false);
+        });
+        it('evaluates A1:A3=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:A3=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, false);
+        });
+        it('evaluates A1:B3=A1:C1', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 4 };
+            workbook.Sheets.Sheet1.B2 = { v: 5 };
+            workbook.Sheets.Sheet1.B3 = { v: 6 };
+            workbook.Sheets.Sheet1.C1 = { v: 7 };
+            workbook.Sheets.Sheet1.D1 = { f: 'A1:B3=A1:C1' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.D1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.D2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.D3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, true);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, false);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, false);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, errorValues['#N/A']);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, errorValues['#N/A']);
         });
         it('evaluates undefined<>"" as false', function() {
             workbook.Sheets.Sheet1.A2.f = 'A1<>""';
@@ -794,6 +1495,86 @@ describe('XLSX_CALC', function() {
         });
     });
 
+    describe('DATEDIF', function () {
+        it('calcs DATEDIF("2000/1/1", "2001/1/1", "D")', function() {
+            workbook.Sheets.Sheet1.A1.f = `DATEDIF('2000-01-01', '2001-01-01', 'D')`;
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.v, 366);
+        });
+
+        it('calcs DATEDIF("2000/1/1", "2001/1/1", "M")', function() {
+            workbook.Sheets.Sheet1.A1.f = `DATEDIF('2000-01-01', '2001-01-01', 'M')`;
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.v, 12);
+        });
+
+        it('calcs DATEDIF("2000/1/1", "2001/1/1", "Y")', function() {
+            workbook.Sheets.Sheet1.A1.f = `DATEDIF('2000-01-01', '2001-01-01', 'Y')`;
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.v, 1);
+        });
+
+        it('should throw #VALUE error if applied to an invalid date', function () {
+            workbook.Sheets.Sheet1.A1.f = `DATEDIF('NOT A DAY', '2001-01-01', 'Y')`;
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.w, "#VALUE!");
+        });
+
+        it('should return days between two values', function () {
+            workbook.Sheets.Sheet1.A1 = {
+                t: 'd',
+                v: new Date('2019-05-01'),
+                w: '2019-05-01'
+            };
+            workbook.Sheets.Sheet1.A2 = {
+                t: 'd',
+                v: new Date('2019-06-01'),
+                w: '2019-06-01'
+            };
+            workbook.Sheets.Sheet1.A3 = { f: 'DATEDIF(A1,A2,"D")' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A3.v, 31);
+            assert.equal(workbook.Sheets.Sheet1.A3.t, 'n');
+        });
+    });
+
+    describe('EOMONTH', function () {
+        it('calcs EOMONTH("2000/1/1", 0)', function() {
+            workbook.Sheets.Sheet1.A1.f = `EOMONTH("2000/1/1", 0)`;
+            XLSX_CALC(workbook);
+            assert.deepEqual(workbook.Sheets.Sheet1.A1.v, new Date("2000-01-31"));
+        });
+
+        it('calcs EOMONTH("2000/1/1", 1)', function() {
+            workbook.Sheets.Sheet1.A1.f = `EOMONTH("2000/1/1", 1)`;
+            XLSX_CALC(workbook);
+            assert.deepEqual(workbook.Sheets.Sheet1.A1.v, new Date("2000-02-29"));
+        });
+
+        it('calcs EOMONTH("2000/12/1", 1)', function() {
+            workbook.Sheets.Sheet1.A1.f = `EOMONTH("2000/12/1", 10)`;
+            XLSX_CALC(workbook);
+            assert.deepEqual(workbook.Sheets.Sheet1.A1.v, new Date("2001-10-31"));
+        });
+
+        it('should throw #VALUE error if applied to an invalid date', function () {
+            workbook.Sheets.Sheet1.A1.f = `EOMONTH('NOT A DAY', 0)`;
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.w, "#VALUE!");
+        });
+
+        it('should return end of a month', function () {
+            workbook.Sheets.Sheet1.A1 = {
+                t: 'd',
+                v: new Date('2019-05-01'),
+                w: '2019-05-01'
+            };
+            workbook.Sheets.Sheet1.A3 = { f: 'EOMONTH(A1,1)' };
+            XLSX_CALC(workbook);
+            assert.deepEqual(workbook.Sheets.Sheet1.A3.v, new Date('2019-06-30'));
+        });
+    });
+
     describe('RIGHT', function () {
         it('should return n last characters of a string value', function () {
             workbook.Sheets.Sheet1.A1.v = 'test value';
@@ -884,6 +1665,68 @@ describe('XLSX_CALC', function() {
             workbook.Sheets.Sheet1.A1.f = 'IF(1>2,0,123)';
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A1.v, 123);
+        });
+        it('should handle matrices of the same dimension', function() {
+            workbook.Sheets.Sheet1.A1 = { v: true };
+            workbook.Sheets.Sheet1.A2 = { v: false };
+            workbook.Sheets.Sheet1.B1 = { v: false };
+            workbook.Sheets.Sheet1.B2 = { v: true };
+            workbook.Sheets.Sheet1.C1 = { v: 1 };
+            workbook.Sheets.Sheet1.C2 = { v: 2 };
+            workbook.Sheets.Sheet1.D1 = { v: 3 };
+            workbook.Sheets.Sheet1.D2 = { v: 4 };
+            workbook.Sheets.Sheet1.E1 = { v: 5 };
+            workbook.Sheets.Sheet1.E2 = { v: 6 };
+            workbook.Sheets.Sheet1.F1 = { v: 7 };
+            workbook.Sheets.Sheet1.F2 = { v: 8 };
+            workbook.Sheets.Sheet1.G1 = { f: 'IF(A1:B2,C1:D2,E1:F2)' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.G1.v, 1);
+            assert.equal(workbook.Sheets.Sheet1.G2.v, 6);
+            assert.equal(workbook.Sheets.Sheet1.H1.v, 7);
+            assert.equal(workbook.Sheets.Sheet1.H2.v, 4);
+        });
+        it('should handle matrices of different dimensions', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 2 };
+            workbook.Sheets.Sheet1.C1 = { v: 3 };
+            workbook.Sheets.Sheet1.D1 = { v: 4 };
+            workbook.Sheets.Sheet1.D2 = { v: 5 };
+            workbook.Sheets.Sheet1.D3 = { v: 6 };
+            workbook.Sheets.Sheet1.E1 = { v: 7 };
+            workbook.Sheets.Sheet1.E2 = { v: 8 };
+            workbook.Sheets.Sheet1.E3 = { v: 9 };
+            workbook.Sheets.Sheet1.F1 = { f: 'IF(A1:A3=A1:C1,D1:D3,E1:E3)' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.F1.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.F2.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.F3.v, 9);
+            assert.equal(workbook.Sheets.Sheet1.G1.v, 7);
+            assert.equal(workbook.Sheets.Sheet1.G2.v, 5);
+            assert.equal(workbook.Sheets.Sheet1.G3.v, 9);
+            assert.equal(workbook.Sheets.Sheet1.H1.v, 7);
+            assert.equal(workbook.Sheets.Sheet1.H2.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.H3.v, 6);
+        });
+        it('should handle missing references', function() {
+            workbook.Sheets.Sheet1.A1 = { v: 1 };
+            workbook.Sheets.Sheet1.A2 = { v: 2 };
+            workbook.Sheets.Sheet1.A3 = { v: 3 };
+            workbook.Sheets.Sheet1.B1 = { v: 1 };
+            workbook.Sheets.Sheet1.B2 = { v: 3 };
+            workbook.Sheets.Sheet1.C1 = { v: 4 };
+            workbook.Sheets.Sheet1.C2 = { v: 5 };
+            workbook.Sheets.Sheet1.C3 = { v: 6 };
+            workbook.Sheets.Sheet1.D1 = { v: 7 };
+            workbook.Sheets.Sheet1.D2 = { v: 8 };
+            workbook.Sheets.Sheet1.D3 = { v: 9 };
+            workbook.Sheets.Sheet1.E1 = { f: 'IF(A1:A3=B1:B2,C1:C3,D1:D3)' };
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.E1.v, 4);
+            assert.equal(workbook.Sheets.Sheet1.E2.v, 8);
+            assert.equal(workbook.Sheets.Sheet1.E3.v, errorValues['#N/A']);
         });
     });
     it('calcs ref with space', function() {
@@ -1022,6 +1865,14 @@ describe('XLSX_CALC', function() {
             workbook.Sheets.Sheet1.A7 = {f: 'AVERAGE(A1:A6)'};
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.A7.v, 0.25);
+        });
+        it('should calc AVERAGE of empty cells as div by zero', function() {
+            workbook.Sheets.Sheet1 = {};
+            workbook.Sheets.Sheet1.B1 = {f: 'AVERAGE(A1:A6)'};
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.B1.v, errorValues["#DIV/0!"]);
+            assert.equal(workbook.Sheets.Sheet1.B1.w, '#DIV/0!');
+            assert.equal(workbook.Sheets.Sheet1.B1.t, 'e');
         });
     });
     describe('IRR', function() {
@@ -1191,6 +2042,42 @@ describe('XLSX_CALC', function() {
             });
             XLSX_CALC(workbook);
             assert.deepEqual(workbook.Sheets.Sheet1.A1.v, ['A2',1,0]);
+        });
+    });
+
+    describe('ROW', function () {
+       it('returns row in which the formula appears', function () {
+           workbook.Sheets.Sheet1.A1.f = 'ROW()';
+           XLSX_CALC(workbook);
+           assert.equal(workbook.Sheets.Sheet1.A1.v, 1);
+       });
+        it('returns row of the reference', function () {
+            workbook.Sheets.Sheet1.A1.f = 'ROW(A2)';
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.v, 2);
+        });
+        it('returns row as an array if the reference is an array', function () {
+            workbook.Sheets.Sheet1.A1.f = 'ROW(A1:A3)';
+            XLSX_CALC(workbook);
+            assert.deepEqual(workbook.Sheets.Sheet1.A1.v, [1, 2, 3]);
+        });
+    });
+
+    describe('COLUMN', function () {
+        it('returns column in which the formula appears', function () {
+            workbook.Sheets.Sheet1.A1.f = 'COLUMN()';
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.v, 1);
+        });
+        it('returns column of the reference', function () {
+            workbook.Sheets.Sheet1.A1.f = 'COLUMN(B1)';
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.A1.v, 2);
+        });
+        it('returns column as an array if the reference is an array', function () {
+            workbook.Sheets.Sheet1.A1.f = 'COLUMN(A1:C1)';
+            XLSX_CALC(workbook);
+            assert.deepEqual(workbook.Sheets.Sheet1.A1.v, [1, 2, 3]);
         });
     });
 
@@ -1492,6 +2379,20 @@ describe('XLSX_CALC', function() {
 
             XLSX_CALC(workbook);
             assert.equal(workbook.Sheets.Sheet1.C1.v, 54);
+        });
+        it('should handle no values for the given arrays', function () {
+            workbook.Sheets.Sheet1 = {
+                A1: { v: 'Array 1' },
+                A2: { v: 3 },
+                A4: { v: 8 },
+                D1: { v: 'Array 2' },
+                D2: { v: 2 },
+                D4: { v: 6 },
+                C1: { f: "SUMPRODUCT(,)" }
+            };
+
+            XLSX_CALC(workbook);
+            assert.equal(workbook.Sheets.Sheet1.C1.w, '#VALUE!');
         });
         it('shows "#VALUE!" error value if the array arguments dont have the same dimensions', function () {
             workbook.Sheets.Sheet1 = {

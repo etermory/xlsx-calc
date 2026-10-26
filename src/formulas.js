@@ -1,4 +1,6 @@
 "use strict";
+const utils = require('./utils')
+const error = require('./errors')
 
 // +---------------------+
 // | FORMULAS REGISTERED |
@@ -50,6 +52,9 @@ let formulas = {
     'CHOOSE': choose,
     'SUBSTITUTE': substitute,
     'CEILING': ceiling,
+    'FILTER': throwErrors(FILTER),
+    'DATEDIF': datediff,
+    'EOMONTH': eomonth,
 };
 
 function choose(option) {
@@ -131,11 +136,11 @@ function sumproduct() {
         return 0;
     },
     consistentSizeRanges = function (matrixArray) {
-        var getRowCount = function(matrix) {
+        var getRowCount = function(matrix = []) {
                 return matrix.length;
             },
-            getColCount = function(matrix) {
-                return matrix[0].length;
+            getColCount = function(matrix = []) {
+                return matrix[0] && matrix[0].length;
             },
             rowCount = getRowCount(matrixArray[0]),
             colCount = getColCount(matrixArray[0]);
@@ -149,7 +154,8 @@ function sumproduct() {
         return true;
     };
 
-    if (!arguments || arguments.length === 0) {
+    if (!arguments || arguments.length === 0 || !arguments[0]) {
+
         throw Error('#VALUE!');
     }
     if (!consistentSizeRanges(arguments)) {
@@ -164,23 +170,23 @@ function sumproduct() {
                 if (Array.isArray(col)) {
                     for (var k = 0; k < col.length; k++) {
                         var cell = col[k];
-                        if (cell && typeof cell === 'object' && cell.t === 'e') {
-                            throw Error(cell.w);
+                        if (cell instanceof Error) {
+                            throw cell;
                         }
                     }
                 }
                 else {
                     var cell = col;
-                    if (cell && typeof cell === 'object' && cell.t === 'e') {
-                        throw Error(cell.w);
+                    if (cell instanceof Error) {
+                        throw cell;
                     }
                 }
             }
         }
         else {
             var cell = row;
-            if (cell && typeof cell === 'object' && cell.t === 'e') {
-                throw Error(cell.w);
+            if (cell instanceof Error) {
+                throw cell;
             }
         }
     }
@@ -478,7 +484,11 @@ function EXP(n) {
 }
 
 function avg() {
-    return sum.apply(this, arguments) / counta.apply(this, arguments);
+    var aux = counta.apply(this, arguments);
+    if (aux == 0) {
+        throw Error('#DIV/0!');
+    }
+    return sum.apply(this, arguments) / aux;
 }
 
 function stDeviation() {
@@ -787,7 +797,7 @@ function day(date) {
     if (!date.getDate) {
         throw Error('#VALUE!');
     }
-    var day = date.getDate();
+    var day = date.getUTCDate();
     if (isNaN(day)) {
         throw Error('#VALUE!');
     }
@@ -798,7 +808,7 @@ function month(date) {
     if (!date.getMonth) {
         throw Error('#VALUE!');
     }
-    var month = date.getMonth();
+    var month = date.getUTCMonth();
     if (isNaN(month)) {
         throw Error('#VALUE!');
     }
@@ -809,11 +819,45 @@ function year(date) {
     if (!date.getFullYear) {
         throw Error('#VALUE!');
     }
-    var year = date.getFullYear();
+    var year = date.getUTCFullYear();
     if (isNaN(year)) {
         throw Error('#VALUE!');
     }
     return year;
+}
+
+function datediff(date1, date2, unit) {
+    date1 = new Date(date1);
+    date2 = new Date(date2);
+
+    if (!date1 || !date2 || date1 == 'Invalid Date' || date2 == 'Invalid Date') {
+        throw Error('#VALUE!');
+    }
+
+    unit = unit.replace(/[^DMY]/ig, "");
+
+    switch(unit) {
+        case "M":
+            return date2.getMonth() - date1.getMonth() + (12 * (date2.getFullYear() - date1.getFullYear()))
+        case "Y":
+            return  Math.abs(date2.getUTCFullYear() - date1.getUTCFullYear());
+        case "D": default: 
+            var timeDiff = Math.abs(date2 - date1);
+            return Math.ceil(timeDiff / (1000 * 3600 * 24));
+    }
+}
+
+function eomonth(date, months) {
+    date = new Date(date);
+    if (!date || date == 'Invalid Date') {
+        throw Error('#VALUE!');
+    }
+    months = months || 0;
+    var endofmonth = new Date(date.getUTCFullYear(), date.getUTCMonth()+months+1, 0);
+    endofmonth.setUTCHours(0);
+    endofmonth.setUTCMinutes(0);
+    endofmonth.setUTCSeconds(0);   
+    return endofmonth;
 }
 
 function right(text, number) {
@@ -882,6 +926,135 @@ function substitute(text, old_text, new_text, occurrence) {
 
 function ceiling(number, significance) {
     return Math.ceil(number / significance) * significance
+}
+/**
+ * Filters an array based on a Boolean (True/False) array.
+ *
+ * Category: Lookup and reference
+ *
+ * @param {*} array The array, or range to filter. E.g. [[1,2,3],[4,5,6]]
+ * @param {*} include A boolean array whose height or width is the same as the array. E.g. [[true, false, true]] OR [[true],[false]]
+ * @param {*} if_empty Optional. The value to return if all values in the included array are empty (filter returns nothing). E.g. "No results"
+ * @returns
+ */
+ function FILTER(array, include, if_empty) {
+    // correct types
+    if (!array || !include) {
+        return error.na
+    }
+
+    if (!(array instanceof Array)) {
+        return error.na
+    }
+
+    if (!(include instanceof Array)) {
+        return error.na
+    }
+
+    // array lengths must be greater than 0 and symmetrical
+    if (array.length === 0) {
+        return error.na
+    }
+
+    if (include.length === 0) {
+        return error.na
+    }
+
+    for (let i = 0; i < array.length; i++) {
+        if (!(array[i] instanceof Array)) {
+            return error.na
+        }
+
+        if (array[i].length === 0) {
+            return error.na
+        }
+
+        if (array[i].length !== array[0].length) {
+            return error.na
+        }
+    }
+
+    for (let i = 0; i < include.length; i++) {
+        if (!(include[i] instanceof Array)) {
+            return error.na
+        }
+
+        if (include[i].length === 0) {
+            return error.na
+        }
+
+        if (include[i].length !== include[0].length) {
+            return error.na
+        }
+    }
+
+    const arrayWidth = array[0].length
+    const arrayHeight = array.length
+    const includeWidth = include[0].length
+    const includeHeight = include.length
+
+    // include array must have same width or height as array (and generally not both)
+    if (arrayWidth !== includeWidth && arrayHeight !== includeHeight) {
+        return error.na
+    }
+
+    if (
+        arrayHeight > 1 &&
+        arrayWidth > 1 &&
+        ((arrayWidth === includeWidth && includeHeight !== 1) || (arrayHeight === includeHeight && includeWidth !== 1))
+    ) {
+        return error.na
+    }
+
+    if (
+        arrayHeight > 1 &&
+        arrayWidth === 1 &&
+        (includeWidth !== 1 || (includeHeight !== 1 && includeHeight !== arrayHeight))
+    ) {
+        return error.na
+    }
+
+    // filter
+    const result = []
+    for (let i = 0; i < arrayHeight; i++) {
+        const row = []
+        for (let j = 0; j < arrayWidth; j++) {
+            const value = getMatrixValueForFilter(include, i, j) || getMatrixValueForFilter(include, 0, j) || getMatrixValueForFilter(include, i, 0)
+            const bool = utils.parseBool(value)
+            if (bool === true) row.push(array[i][j])
+            else if (bool instanceof Error) return utils.addEmptyValuesToArray([[bool]], arrayWidth, arrayHeight)
+        }
+        if (row.length > 0) result.push(row)
+    }
+
+    if (result.length === 0) {
+        if (if_empty != null) {
+            return utils.addEmptyValuesToArray([[if_empty]], arrayWidth, arrayHeight)
+        }
+
+        return utils.addEmptyValuesToArray([[error.calc]], arrayWidth, arrayHeight)
+    }
+
+    return utils.addEmptyValuesToArray(result, arrayWidth, arrayHeight)
+}
+
+function getMatrixValueForFilter(matrix, i, j) {
+    if (matrix[i]) {
+        if (matrix[i][j] === false) {
+            return 'FALSE'
+        }
+        return matrix[i][j]
+    }
+}
+
+function throwErrors(someFormula) {
+    return function() {
+        const result = someFormula.apply(this, arguments);
+        if (result instanceof Error) {
+            throw result;
+        }
+        return result;
+    }
 }
 
 module.exports = formulas;

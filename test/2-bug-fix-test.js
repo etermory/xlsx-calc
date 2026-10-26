@@ -37,6 +37,21 @@ describe('Bugs', function() {
         XLSX_CALC(workbook);
         assert.equal(workbook.Sheets.Sheet1.A1.v, 24);
     });
+    it('should calc 0="" as false', function() {
+        workbook.Sheets.Sheet1.A1.f = '0=""';
+        XLSX_CALC(workbook);
+        assert.equal(workbook.Sheets.Sheet1.A1.v, false);
+    });
+    it('should calc 0<>"" as true', function() {
+        workbook.Sheets.Sheet1.A2.f = '0<>""';
+        XLSX_CALC(workbook);
+        assert.equal(workbook.Sheets.Sheet1.A2.v, true);
+    });
+    it('should calc 6^4-4^4 = 1040', function() {
+        workbook.Sheets.Sheet1.A2.f = '6^4-4^4';
+        XLSX_CALC(workbook);
+        assert.equal(workbook.Sheets.Sheet1.A2.v, 1040);
+    });
     it('should consider the end of string', function() {
         workbook.Sheets.Sheet1.A1.f = 'IF($C$3<=0,"Tempo de Investimento Invalido",IF($C$3<=24,"x","y"))';
         workbook.Sheets.Sheet1.C3 = { v: 24 };
@@ -172,4 +187,21 @@ describe('Bugs', function() {
 
     });
 
+    it('fixes negative powers', () => {
+        let workbook = {
+            Sheets: {
+                Sample: {
+                    A1: {v: 2},
+                    A2: { f: '6^2-A1^2' },
+                    A3: { f: 'A1^-2' },
+                    A4: { f: '6^2-A1^2+A1^-2' },
+                }
+            }
+        };
+        XLSX_CALC(workbook);
+        let sheet = workbook.Sheets.Sample;
+        assert.equal(sheet.A2.v, 32);
+        assert.equal(sheet.A3.v, 0.25);
+        assert.equal(sheet.A4.v, 32.25);
+    });
 });

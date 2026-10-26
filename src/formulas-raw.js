@@ -2,6 +2,7 @@
 
 const int_2_col_str = require('./int_2_col_str.js');
 const col_str_2_int = require('./col_str_2_int.js');
+const dynamic_array_compatible = require('./dynamic_array_compatible.js');
 const RawValue = require('./RawValue.js');
 const Range = require('./Range.js');
 const RefValue = require('./RefValue.js');
@@ -29,6 +30,48 @@ function raw_offset(cell_ref, rows, columns, height, width) {
     }
 }
 
+function row(cell_ref) {
+    if (cell_ref.args.length === 0) {
+        var row = +cell_ref.formula.name.replace(/^[A-Z]+/g, '');
+        return row;
+    } else if (cell_ref.args.length === 1 && cell_ref.args[0].name === 'RefValue') {
+        var ref_value = cell_ref.args[0];
+        var parsed_ref = ref_value.parseRef();
+        var row = +parsed_ref.cell_name.replace(/^[A-Z]+/g, '');
+        return row;
+    } else if (cell_ref.args.length === 1 && cell_ref.args[0] instanceof Range) {
+        var results = cell_ref.args[0].parse();
+        var min_row = results.min_row;
+        var max_row = results.max_row;
+        var rows = [];
+        for (var i = min_row; i <= max_row; i++) {
+            rows.push(i);
+        }
+        return rows;
+    }
+}
+
+function column(cell_ref) {
+    if (cell_ref.args.length === 0) {
+        var col = col_str_2_int(cell_ref.formula.name);
+        return col + 1;
+    } else if (cell_ref.args.length === 1 && cell_ref.args[0].name === 'RefValue') {
+        var ref_value = cell_ref.args[0];
+        var parsed_ref = ref_value.parseRef();
+        var col = col_str_2_int(parsed_ref.cell_name);
+        return col + 1;
+    }  else if (cell_ref.args.length === 1 && cell_ref.args[0] instanceof Range) {
+        var results = cell_ref.args[0].parse();
+        var min_col = results.min_col;
+        var max_col = results.max_col;
+        var cols = [];
+        for (var i = min_col; i <= max_col; i++) {
+            cols.push(i + 1);
+        }
+        return cols;
+    }
+}
+
 function iferror(cell_ref, onerrorvalue) {
     try {
         var value = cell_ref.calc();
@@ -36,39 +79,48 @@ function iferror(cell_ref, onerrorvalue) {
             return onerrorvalue.calc();
         }
         return value;
-    } catch(e) {
+    } catch (e) {
         return onerrorvalue.calc();
     }
 }
 
 function _if(condition, _then, _else) {
-    if (condition.calc()) {
-        // console.log(condition.formula.name)
-        // if (condition.formula.name === 'P40') {
-        //     console.log('P40 =', _then.calc());
-        //     console.log(' -->', _then.args[1].calc());
-        // }
-        return _then.calc();
+    var condition_results;
+    var then_results;
+    var else_results;
+    try {
+        condition_results = condition.calc();
+    } catch (e) {
+        condition_results = e;
     }
-    else {
-        if (typeof _else === 'undefined') {
-            return false;
-        } else {
-            return _else.calc();
+    try {
+        then_results = _then.calc();
+    } catch (e) {
+        then_results = e;
+    }
+    try {
+        else_results = typeof _else === 'undefined' ? false : _else.calc();
+    } catch (e) {
+        else_results = e;
+    }
+    return dynamic_array_compatible(function (condition_result, then_result, else_result) {
+        if (condition_result instanceof Error) {
+            return condition_result;
         }
-    }
+        return condition_result ? then_result : else_result;
+    })(condition_results, then_results, else_results);
 }
 
 function and() {
     for (var i = 0; i < arguments.length; i++) {
-        if(!arguments[i].calc()) return false;
+        if (!arguments[i].calc()) return false;
     }
     return true;
 }
 
 function _or() {
     for (var i = 0; i < arguments.length; i++) {
-        if(arguments[i].calc()) return true;
+        if (arguments[i].calc()) return true;
     }
     return false;
 }
@@ -102,9 +154,11 @@ function transpose(expressionWithRange) {
 
 module.exports = {
     'OFFSET': raw_offset,
+    'ROW': row,
+    'COLUMN': column,
     'IFERROR': iferror,
     'IF': _if,
     'AND': and,
     'OR': _or,
-    'TRANSPOSE': transpose
+    'TRANSPOSE': transpose,
 };
